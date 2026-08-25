@@ -1,1 +1,391 @@
+(function () {
+  "use strict";
 
+  /* ============================================================
+     Footer year
+     ============================================================ */
+  var yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  /* ============================================================
+     Live visitor counter (illustrative — not a real analytics feed).
+     Seeds a plausible value based on the time of day, persists it in
+     localStorage for the current day, then ticks it up gradually.
+     ============================================================ */
+  (function initVisitorCounter() {
+    var targets = [document.getElementById("visitorCount"), document.getElementById("visitorCountFloat")];
+    targets = targets.filter(Boolean);
+    if (!targets.length) return;
+
+    var storage = null;
+    try { storage = window.localStorage; } catch (e) { storage = null; }
+
+    var today = new Date();
+    var dayKey = "rx_visitors_" + today.toISOString().slice(0, 10);
+    var count;
+
+    var stored = storage ? storage.getItem(dayKey) : null;
+    if (stored && !isNaN(parseInt(stored, 10))) {
+      count = parseInt(stored, 10);
+    } else {
+      var hourFraction = today.getHours() + today.getMinutes() / 60;
+      count = Math.round(310 + hourFraction * 95 + Math.random() * 140);
+      if (storage) {
+        try { storage.setItem(dayKey, String(count)); } catch (e) { /* ignore */ }
+      }
+    }
+
+    function render() {
+      var formatted = count.toLocaleString("fr-FR");
+      targets.forEach(function (el) { el.textContent = formatted; });
+    }
+    render();
+
+    function tick() {
+      count += Math.floor(Math.random() * 3) + 1;
+      if (storage) {
+        try { storage.setItem(dayKey, String(count)); } catch (e) { /* ignore */ }
+      }
+      render();
+      setTimeout(tick, 4000 + Math.random() * 5000);
+    }
+    setTimeout(tick, 4000 + Math.random() * 5000);
+  })();
+
+  /* ============================================================
+     Mobile nav burger
+     ============================================================ */
+  var burger = document.getElementById("burgerBtn");
+  var nav = document.getElementById("mainNav");
+  if (burger && nav) {
+    burger.addEventListener("click", function () {
+      var open = nav.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    nav.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        nav.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
+
+  /* ============================================================
+     Brand / model dataset
+     ============================================================ */
+  var BRANDS = {
+    "Peugeot": ["108", "208", "308", "2008", "3008", "5008", "508", "Partner"],
+    "Renault": ["Clio", "Captur", "Mégane", "Scénic", "Kadjar", "Talisman", "Twingo", "Kangoo"],
+    "Citroën": ["C1", "C3", "C4", "C5 Aircross", "Berlingo", "C3 Aircross", "DS3"],
+    "Volkswagen": ["Polo", "Golf", "Tiguan", "Passat", "T-Roc", "T-Cross", "Touran"],
+    "Audi": ["A1", "A3", "A4", "A5", "Q2", "Q3", "Q5", "TT"],
+    "BMW": ["Série 1", "Série 2", "Série 3", "Série 4", "Série 5", "X1", "X3", "X5"],
+    "Mercedes-Benz": ["Classe A", "Classe B", "Classe C", "Classe E", "GLA", "GLC", "CLA"],
+    "Toyota": ["Yaris", "Corolla", "C-HR", "RAV4", "Aygo", "Camry", "Proace"],
+    "Ford": ["Fiesta", "Focus", "Puma", "Kuga", "Mondeo", "EcoSport"],
+    "Opel": ["Corsa", "Astra", "Crossland", "Grandland", "Mokka", "Insignia"],
+    "Fiat": ["500", "Panda", "Tipo", "500X", "Punto", "Doblo"],
+    "Nissan": ["Micra", "Juke", "Qashqai", "X-Trail", "Leaf", "Note"],
+    "Dacia": ["Sandero", "Duster", "Logan", "Spring", "Jogger"],
+    "Kia": ["Picanto", "Rio", "Ceed", "Sportage", "Niro", "Stonic"],
+    "Hyundai": ["i10", "i20", "i30", "Tucson", "Kona", "Santa Fe"],
+    "Seat": ["Ibiza", "Leon", "Arona", "Ateca", "Tarraco"],
+    "Skoda": ["Fabia", "Octavia", "Kamiq", "Karoq", "Kodiaq", "Scala"],
+    "Volvo": ["V40", "V60", "XC40", "XC60", "XC90", "S60"],
+    "Mini": ["Cooper", "Countryman", "Clubman"],
+    "Alfa Romeo": ["Giulietta", "Giulia", "Stelvio", "Mito"],
+    "Honda": ["Civic", "Jazz", "CR-V", "HR-V"],
+    "Mazda": ["Mazda2", "Mazda3", "CX-3", "CX-5"],
+    "Suzuki": ["Swift", "Vitara", "S-Cross", "Ignis"],
+    "Jeep": ["Renegade", "Compass", "Cherokee"],
+    "Tesla": ["Model 3", "Model S", "Model X", "Model Y"],
+    "DS": ["DS3", "DS4", "DS7"],
+    "Land Rover": ["Range Rover Evoque", "Discovery Sport", "Defender"],
+    "Porsche": ["Macan", "Cayenne", "911", "Panamera"],
+    "Autre": []
+  };
+
+  var marqueSelect = document.getElementById("f-marque");
+  var modeleInput = document.getElementById("f-modele");
+  var modeleList = document.getElementById("modeleList");
+
+  if (marqueSelect) {
+    var frag = document.createDocumentFragment();
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Sélectionner une marque";
+    frag.appendChild(placeholder);
+    Object.keys(BRANDS).sort().forEach(function (brand) {
+      if (brand === "Autre") return;
+      var opt = document.createElement("option");
+      opt.value = brand;
+      opt.textContent = brand;
+      frag.appendChild(opt);
+    });
+    var autreOpt = document.createElement("option");
+    autreOpt.value = "Autre";
+    autreOpt.textContent = "Autre marque";
+    frag.appendChild(autreOpt);
+    marqueSelect.appendChild(frag);
+
+    marqueSelect.addEventListener("change", function () {
+      modeleList.innerHTML = "";
+      var models = BRANDS[marqueSelect.value] || [];
+      models.forEach(function (m) {
+        var opt = document.createElement("option");
+        opt.value = m;
+        modeleList.appendChild(opt);
+      });
+    });
+  }
+
+  var anneeSelect = document.getElementById("f-annee");
+  if (anneeSelect) {
+    var currentYear = new Date().getFullYear();
+    var yFrag = document.createDocumentFragment();
+    var yPlaceholder = document.createElement("option");
+    yPlaceholder.value = "";
+    yPlaceholder.textContent = "Sélectionner une année";
+    yFrag.appendChild(yPlaceholder);
+    for (var y = currentYear + 1; y >= 1990; y--) {
+      var yOpt = document.createElement("option");
+      yOpt.value = String(y);
+      yOpt.textContent = String(y);
+      yFrag.appendChild(yOpt);
+    }
+    anneeSelect.appendChild(yFrag);
+  }
+
+  /* ============================================================
+     km field: live thousands-formatting
+     ============================================================ */
+  var kmInput = document.getElementById("f-km");
+  if (kmInput) {
+    kmInput.addEventListener("input", function () {
+      var digits = kmInput.value.replace(/\D/g, "").slice(0, 7);
+      kmInput.value = digits ? Number(digits).toLocaleString("fr-FR") : "";
+    });
+  }
+
+  /* ============================================================
+     Choice-grid buttons (single select per group)
+     ============================================================ */
+  var wizardData = {};
+  document.querySelectorAll(".choice-grid").forEach(function (grid) {
+    var field = grid.getAttribute("data-field");
+    grid.querySelectorAll(".choice-btn").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", "false");
+      btn.addEventListener("click", function () {
+        grid.querySelectorAll(".choice-btn").forEach(function (b) {
+          b.classList.remove("selected");
+          b.setAttribute("aria-pressed", "false");
+        });
+        btn.classList.add("selected");
+        btn.setAttribute("aria-pressed", "true");
+        wizardData[field] = btn.textContent.trim();
+        clearStepError();
+      });
+    });
+  });
+
+  /* ============================================================
+     Multi-step wizard
+     ============================================================ */
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".form-step[data-step]"));
+  var dataSteps = steps.filter(function (s) { return s.getAttribute("data-step") !== "result"; });
+  var resultStep = document.querySelector('.form-step[data-step="result"]');
+  var btnNext = document.getElementById("btnNext");
+  var btnBack = document.getElementById("btnBack");
+  var gaugeCircle = document.getElementById("gaugeCircle");
+  var gaugePct = document.getElementById("gaugePct");
+  var formError = document.getElementById("formError");
+  var total = dataSteps.length;
+  var current = 0;
+
+  var CIRC = 2 * Math.PI * 52;
+  if (gaugeCircle) gaugeCircle.style.strokeDasharray = CIRC;
+
+  function clearStepError() {
+    if (formError) { formError.hidden = true; formError.textContent = ""; }
+  }
+
+  function showStep(index) {
+    dataSteps.forEach(function (s, i) {
+      s.classList.toggle("active", i === index);
+    });
+    if (resultStep) resultStep.classList.remove("active");
+    btnBack.hidden = index === 0;
+    btnNext.innerHTML = (index === total - 1)
+      ? "Voir mon estimation"
+      : 'Suivant <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    updateGauge(index);
+    clearStepError();
+  }
+
+  function updateGauge(index) {
+    var pct = Math.round(((index) / total) * 100);
+    var offset = CIRC - (pct / 100) * CIRC;
+    if (gaugeCircle) gaugeCircle.style.strokeDashoffset = offset;
+    if (gaugePct) gaugePct.textContent = pct + "%";
+  }
+
+  function validateStep(index) {
+    var step = dataSteps[index];
+    var field = step.querySelector("select, input:not([type=checkbox])");
+    var grid = step.querySelector(".choice-grid");
+
+    if (grid) {
+      var key = grid.getAttribute("data-field");
+      if (!wizardData[key]) {
+        showError("Merci de sélectionner une option pour continuer.");
+        return false;
+      }
+      return true;
+    }
+
+    // Last step: contact info (multiple fields)
+    var inputs = step.querySelectorAll("input[required], select[required]");
+    if (inputs.length > 1) {
+      for (var i = 0; i < inputs.length; i++) {
+        var el = inputs[i];
+        if (el.type === "checkbox") {
+          if (!el.checked) { showError("Merci d'accepter les conditions pour continuer."); return false; }
+          continue;
+        }
+        if (!el.value || (el.checkValidity && !el.checkValidity())) {
+          showError("Merci de vérifier les informations saisies (téléphone, email, code postal).");
+          el.focus();
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (field) {
+      if (!field.value || (field.checkValidity && !field.checkValidity())) {
+        showError("Merci de renseigner ce champ pour continuer.");
+        field.focus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function showError(msg) {
+    if (!formError) return;
+    formError.textContent = msg;
+    formError.hidden = false;
+  }
+
+  btnNext.addEventListener("click", function () {
+    if (!validateStep(current)) return;
+
+    if (current < total - 1) {
+      current++;
+      showStep(current);
+    } else {
+      // final submit
+      submitEstimation();
+    }
+  });
+
+  btnBack.addEventListener("click", function () {
+    if (current > 0) {
+      current--;
+      showStep(current);
+    }
+  });
+
+  if (dataSteps.length) {
+    dataSteps[0].classList.add("active");
+    showStep(0);
+  }
+
+  /* ============================================================
+     Price estimation heuristic (indicative, client-side only)
+     ============================================================ */
+  var BRAND_TIER = {
+    "Audi": 1.35, "BMW": 1.4, "Mercedes-Benz": 1.4, "Porsche": 2.2, "Land Rover": 1.5,
+    "Volvo": 1.25, "Mini": 1.2, "DS": 1.2, "Tesla": 1.6,
+    "Peugeot": 1, "Renault": 1, "Citroën": 0.95, "Volkswagen": 1.1, "Toyota": 1.1,
+    "Ford": 0.95, "Opel": 0.9, "Fiat": 0.85, "Nissan": 0.95, "Dacia": 0.8,
+    "Kia": 0.95, "Hyundai": 0.95, "Seat": 0.9, "Skoda": 1, "Alfa Romeo": 1.05,
+    "Honda": 1, "Mazda": 1, "Suzuki": 0.85, "Jeep": 1.05
+  };
+
+  function estimatePrice() {
+    var year = Number(document.getElementById("f-annee").value) || new Date().getFullYear() - 8;
+    var km = Number((document.getElementById("f-km").value || "0").replace(/\D/g, "")) || 90000;
+    var tier = BRAND_TIER[marqueSelect.value] || 1;
+    var age = Math.max(0, new Date().getFullYear() - year);
+
+    var ageFactor = Math.max(0.15, 1 - age * 0.055);
+    var kmFactor = Math.max(0.2, 1 - km / 320000);
+
+    var conditionFactor = 1;
+    switch (wizardData.etat) {
+      case "Excellent état": conditionFactor = 1.12; break;
+      case "Bon état": conditionFactor = 1; break;
+      case "État moyen": conditionFactor = 0.82; break;
+      case "Nécessite des réparations": conditionFactor = 0.68; break;
+    }
+
+    var fuelFactor = 1;
+    switch (wizardData.carburant) {
+      case "Diesel": fuelFactor = 0.97; break;
+      case "Électrique": fuelFactor = 1.2; break;
+      case "Hybride": fuelFactor = 1.08; break;
+      case "GPL": fuelFactor = 0.93; break;
+    }
+
+    var gearboxFactor = wizardData.boite === "Boîte automatique" ? 1.05 : 1;
+
+    var base = 9500 * tier;
+    var value = base * ageFactor * kmFactor * conditionFactor * fuelFactor * gearboxFactor;
+    value = Math.max(300, value);
+
+    var low = Math.round((value * 0.9) / 50) * 50;
+    var high = Math.round((value * 1.18) / 50) * 50;
+    return { low: low, high: high };
+  }
+
+  function submitEstimation() {
+    var range = estimatePrice();
+    var resultLow = document.getElementById("resultLow");
+    var resultHigh = document.getElementById("resultHigh");
+    if (resultLow) resultLow.textContent = range.low.toLocaleString("fr-FR");
+    if (resultHigh) resultHigh.textContent = range.high.toLocaleString("fr-FR");
+
+    dataSteps.forEach(function (s) { s.classList.remove("active"); });
+    if (resultStep) resultStep.classList.add("active");
+
+    var nav = document.querySelector(".wizard-nav");
+    if (nav) nav.style.display = "none";
+
+    if (gaugeCircle) gaugeCircle.style.strokeDashoffset = 0;
+    if (gaugePct) gaugePct.textContent = "100%";
+
+    // NOTE: no backend is configured. Hook this up to your CRM / email
+    // service (e.g. a serverless function, Formspree, HubSpot, etc.)
+    // to actually receive and route incoming leads.
+  }
+
+  /* ============================================================
+     Contact form (front-end only demo submission)
+     ============================================================ */
+  var contactForm = document.getElementById("contactForm");
+  var contactSuccess = document.getElementById("contactSuccess");
+  if (contactForm) {
+    contactForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!contactForm.checkValidity()) {
+        contactForm.reportValidity();
+        return;
+      }
+      contactForm.reset();
+      if (contactSuccess) contactSuccess.hidden = false;
+      // NOTE: no backend is configured — wire this up to your email/CRM
+      // service to actually receive messages.
+    });
+  }
+})();
