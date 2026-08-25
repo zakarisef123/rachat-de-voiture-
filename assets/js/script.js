@@ -390,4 +390,81 @@
       // service to actually receive messages.
     });
   }
+
+  /* ============================================================
+     Callback request modal ("Être rappelé")
+     ============================================================ */
+  (function initCallbackModal() {
+    var openBtn = document.getElementById("openCallbackModal");
+    var modal = document.getElementById("callbackModal");
+    if (!openBtn || !modal) return;
+
+    var closeBtn = document.getElementById("closeCallbackModal");
+    var closeSuccessBtn = document.getElementById("closeCallbackSuccess");
+    var form = document.getElementById("callbackForm");
+    var success = document.getElementById("callbackSuccess");
+    var error = document.getElementById("callbackError");
+    var telInput = document.getElementById("cb-tel");
+    var lastFocused = null;
+
+    function showError(msg) {
+      if (!error) return;
+      error.textContent = msg;
+      error.hidden = false;
+    }
+
+    function resetModal() {
+      form.hidden = false;
+      success.hidden = true;
+      form.reset();
+      if (error) { error.hidden = true; error.textContent = ""; }
+    }
+
+    function openModal() {
+      lastFocused = document.activeElement;
+      resetModal();
+      modal.hidden = false;
+      document.documentElement.classList.add("no-scroll");
+      if (telInput) telInput.focus();
+    }
+
+    function closeModal() {
+      modal.hidden = true;
+      document.documentElement.classList.remove("no-scroll");
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    openBtn.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (closeSuccessBtn) closeSuccessBtn.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !modal.hidden) closeModal();
+    });
+
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var tel = document.getElementById("cb-tel");
+        var desc = document.getElementById("cb-desc");
+        if (!tel.value || (tel.checkValidity && !tel.checkValidity())) {
+          showError("Merci de renseigner un numéro de téléphone valide.");
+          tel.focus();
+          return;
+        }
+        if (!desc.value.trim()) {
+          showError("Merci de décrire brièvement votre véhicule.");
+          desc.focus();
+          return;
+        }
+        form.hidden = true;
+        success.hidden = false;
+        // NOTE: no backend is configured — wire this up to your CRM/email
+        // service to actually receive callback requests.
+      });
+    }
+  })();
 })();
