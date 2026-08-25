@@ -216,7 +216,7 @@
     if (resultStep) resultStep.classList.remove("active");
     btnBack.hidden = index === 0;
     btnNext.innerHTML = (index === total - 1)
-      ? "Voir mon estimation"
+      ? "Envoyer ma demande"
       : 'Suivant <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     updateGauge(index);
     clearStepError();
@@ -301,61 +301,12 @@
     showStep(0);
   }
 
-  /* ============================================================
-     Price estimation heuristic (indicative, client-side only)
-     ============================================================ */
-  var BRAND_TIER = {
-    "Audi": 1.35, "BMW": 1.4, "Mercedes-Benz": 1.4, "Porsche": 2.2, "Land Rover": 1.5,
-    "Volvo": 1.25, "Mini": 1.2, "DS": 1.2, "Tesla": 1.6,
-    "Peugeot": 1, "Renault": 1, "Citroën": 0.95, "Volkswagen": 1.1, "Toyota": 1.1,
-    "Ford": 0.95, "Opel": 0.9, "Fiat": 0.85, "Nissan": 0.95, "Dacia": 0.8,
-    "Kia": 0.95, "Hyundai": 0.95, "Seat": 0.9, "Skoda": 1, "Alfa Romeo": 1.05,
-    "Honda": 1, "Mazda": 1, "Suzuki": 0.85, "Jeep": 1.05
-  };
-
-  function estimatePrice() {
-    var year = Number(document.getElementById("f-annee").value) || new Date().getFullYear() - 8;
-    var km = Number((document.getElementById("f-km").value || "0").replace(/\D/g, "")) || 90000;
-    var tier = BRAND_TIER[marqueSelect.value] || 1;
-    var age = Math.max(0, new Date().getFullYear() - year);
-
-    var ageFactor = Math.max(0.15, 1 - age * 0.055);
-    var kmFactor = Math.max(0.2, 1 - km / 320000);
-
-    var conditionFactor = 1;
-    switch (wizardData.etat) {
-      case "Excellent état": conditionFactor = 1.12; break;
-      case "Bon état": conditionFactor = 1; break;
-      case "État moyen": conditionFactor = 0.82; break;
-      case "Nécessite des réparations": conditionFactor = 0.68; break;
-    }
-
-    var fuelFactor = 1;
-    switch (wizardData.carburant) {
-      case "Diesel": fuelFactor = 0.97; break;
-      case "Électrique": fuelFactor = 1.2; break;
-      case "Hybride": fuelFactor = 1.08; break;
-      case "GPL": fuelFactor = 0.93; break;
-    }
-
-    var gearboxFactor = wizardData.boite === "Boîte automatique" ? 1.05 : 1;
-
-    var base = 9500 * tier;
-    var value = base * ageFactor * kmFactor * conditionFactor * fuelFactor * gearboxFactor;
-    value = Math.max(300, value);
-
-    var low = Math.round((value * 0.9) / 50) * 50;
-    var high = Math.round((value * 1.18) / 50) * 50;
-    return { low: low, high: high };
-  }
-
   function submitEstimation() {
-    var range = estimatePrice();
-    var resultLow = document.getElementById("resultLow");
-    var resultHigh = document.getElementById("resultHigh");
-    if (resultLow) resultLow.textContent = range.low.toLocaleString("fr-FR");
-    if (resultHigh) resultHigh.textContent = range.high.toLocaleString("fr-FR");
-
+    // No real price is shown here: without live listings for the
+    // person's region to compare against, a client-side number would
+    // just be invented. Instead we confirm the request and hand off
+    // to a human advisor who calls back with a real, comparison-based
+    // offer within 24-48h.
     dataSteps.forEach(function (s) { s.classList.remove("active"); });
     if (resultStep) resultStep.classList.add("active");
 
