@@ -1,6 +1,43 @@
 /* ==========================================================================
-   RachatExpress — design system
+   Rachète Mon Auto 42 — design system
    ========================================================================== */
+
+/* ---------- Intro loader (traffic-light) ---------- */
+html.intro-active{ overflow:hidden; }
+.intro-loader{
+  position:fixed; inset:0; z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, #0b1c52, #1a3aa0);
+  transition:opacity .45s ease, visibility .45s ease;
+}
+.intro-loader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+.intro-content{ display:flex; flex-direction:column; align-items:center; gap:22px; }
+.traffic-light{
+  display:flex; flex-direction:column; gap:14px;
+  background:#161b26; padding:18px 16px; border-radius:18px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.tl-lamp{
+  width:36px; height:36px; border-radius:50%;
+  background:#2c3244; opacity:.4;
+  transition:background .2s ease, opacity .2s ease, box-shadow .2s ease;
+}
+.tl-lamp.active.tl-red{ background:#ef4444; opacity:1; box-shadow:0 0 26px 6px rgba(239,68,68,.6); }
+.tl-lamp.active.tl-orange{ background:var(--gold-500,#c9a227); opacity:1; box-shadow:0 0 26px 6px rgba(201,162,39,.6); }
+.tl-lamp.active.tl-green{ background:#22c55e; opacity:1; box-shadow:0 0 26px 6px rgba(34,197,94,.6); }
+.intro-text{
+  color:#fff; font-family:var(--font-head,'Poppins',sans-serif); font-weight:700;
+  font-size:1.15rem; letter-spacing:.02em; margin:0; text-align:center;
+}
+.intro-skip{
+  background:transparent; border:1px solid rgba(255,255,255,.35); color:#fff;
+  padding:8px 18px; border-radius:99px; font-size:.82rem; font-weight:600;
+  cursor:pointer; transition:background .15s ease;
+}
+.intro-skip:hover{ background:rgba(255,255,255,.14); }
+@media (prefers-reduced-motion: reduce){
+  .intro-loader{ display:none; }
+}
 
 :root{
   --blue-900:#0b1c52;
@@ -500,6 +537,7 @@ section{ padding:88px 0; }
 .contact-method{
   display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--border);
 }
+.contact-method > span{ min-width:0; overflow-wrap:anywhere; }
 .contact-icon{ font-size:1.4rem; width:44px; height:44px; border-radius:50%; background:var(--blue-100); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .contact-method strong{ color:var(--blue-900); }
 .contact-form-wrap{
