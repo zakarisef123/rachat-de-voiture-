@@ -2,6 +2,57 @@
   "use strict";
 
   /* ============================================================
+     Intro loader (traffic-light animation)
+     ============================================================ */
+  (function initIntroLoader() {
+    var loader = document.getElementById("introLoader");
+    if (!loader) return;
+
+    function finish() {
+      loader.classList.add("hide");
+      document.documentElement.classList.remove("intro-active");
+      setTimeout(function () {
+        if (loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 500);
+    }
+
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      finish();
+      return;
+    }
+
+    document.documentElement.classList.add("intro-active");
+
+    var lamps = [
+      loader.querySelector(".tl-red"),
+      loader.querySelector(".tl-orange"),
+      loader.querySelector(".tl-green")
+    ];
+    var stepDelay = 650;
+    var timers = [];
+
+    lamps.forEach(function (lamp, i) {
+      if (!lamp) return;
+      timers.push(setTimeout(function () {
+        lamps.forEach(function (l) { if (l) l.classList.remove("active"); });
+        lamp.classList.add("active");
+      }, i * stepDelay));
+    });
+
+    var finishTimer = setTimeout(finish, lamps.length * stepDelay + stepDelay);
+
+    var skipBtn = document.getElementById("introSkip");
+    if (skipBtn) {
+      skipBtn.addEventListener("click", function () {
+        timers.forEach(clearTimeout);
+        clearTimeout(finishTimer);
+        finish();
+      });
+    }
+  })();
+
+  /* ============================================================
      Footer year
      ============================================================ */
   var yearEl = document.getElementById("year");
