@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Rachète Mon Auto 42 — design system
+   RACHÈTE MON AUTO 42 — design system
    ========================================================================== */
 
 /* ---------- Intro loader (traffic-light) ---------- */
@@ -243,6 +243,7 @@ section{ padding:88px 0; }
   color:#fff; font-size:clamp(2rem,4vw,3rem); margin-bottom:18px;
 }
 .hero h1 span{ color:var(--gold-500); }
+.brand-accent{ color:var(--blue-600); }
 .hero-sub{ color:#dbe4fb; font-size:1.1rem; max-width:520px; }
 .hero-badges{ margin:22px 0 30px; display:flex; flex-direction:column; gap:10px; }
 .hero-badges li{ display:flex; align-items:center; gap:10px; color:#eef3ff; font-weight:600; font-size:.95rem; }
