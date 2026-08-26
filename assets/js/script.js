@@ -53,6 +53,33 @@
   })();
 
   /* ============================================================
+     Shared form submission (FormSubmit.co — no backend required)
+     All forms on the site send their data to this one address.
+     ============================================================ */
+  var FORM_TARGET_EMAIL = "Monauto-42000@outlook.fr";
+
+  function sendToFormSubmit(fields, subject) {
+    var payload = {};
+    for (var key in fields) {
+      if (Object.prototype.hasOwnProperty.call(fields, key)) {
+        payload[key] = fields[key];
+      }
+    }
+    payload._subject = subject;
+    payload._template = "table";
+    payload._captcha = "false";
+
+    return fetch("https://formsubmit.co/ajax/" + encodeURIComponent(FORM_TARGET_EMAIL), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) { throw new Error("submit failed"); }
+      return res.json();
+    });
+  }
+
+  /* ============================================================
      Footer year
      ============================================================ */
   var yearEl = document.getElementById("year");
@@ -358,25 +385,57 @@
     // just be invented. Instead we confirm the request and hand off
     // to a human advisor who calls back with a real, comparison-based
     // offer within 24-48h.
-    dataSteps.forEach(function (s) { s.classList.remove("active"); });
-    if (resultStep) resultStep.classList.add("active");
+    var getVal = function (id) {
+      var el = document.getElementById(id);
+      return el ? el.value : "";
+    };
+    var payload = {
+      marque: getVal("f-marque"),
+      modele: getVal("f-modele"),
+      annee: getVal("f-annee"),
+      carrosserie: wizardData.carrosserie || "",
+      carburant: wizardData.carburant || "",
+      motorisation: wizardData.motorisation || "",
+      puissance_cv: getVal("f-puissance"),
+      boite: wizardData.boite || "",
+      portes: wizardData.portes || "",
+      kilometrage: getVal("f-km"),
+      etat: wizardData.etat || "",
+      delai_de_vente: getVal("f-delai"),
+      nom: getVal("f-nom"),
+      telephone: getVal("f-tel"),
+      email: getVal("f-email"),
+      code_postal: getVal("f-cp")
+    };
 
-    var nav = document.querySelector(".wizard-nav");
-    if (nav) nav.style.display = "none";
+    btnNext.disabled = true;
+    var previousLabel = btnNext.innerHTML;
+    btnNext.textContent = "Envoi en cours...";
 
-    if (gaugeCircle) gaugeCircle.style.strokeDashoffset = 0;
-    if (gaugePct) gaugePct.textContent = "100%";
+    sendToFormSubmit(payload, "Nouvelle demande d'estimation - " + (payload.marque || "?") + " " + (payload.modele || ""))
+      .then(function () {
+        dataSteps.forEach(function (s) { s.classList.remove("active"); });
+        if (resultStep) resultStep.classList.add("active");
 
-    // NOTE: no backend is configured. Hook this up to your CRM / email
-    // service (e.g. a serverless function, Formspree, HubSpot, etc.)
-    // to actually receive and route incoming leads.
+        var nav = document.querySelector(".wizard-nav");
+        if (nav) nav.style.display = "none";
+
+        if (gaugeCircle) gaugeCircle.style.strokeDashoffset = 0;
+        if (gaugePct) gaugePct.textContent = "100%";
+      })
+      .catch(function () {
+        btnNext.disabled = false;
+        btnNext.innerHTML = previousLabel;
+        showError("Une erreur est survenue lors de l'envoi. Merci de réessayer, ou contactez-nous directement par téléphone ou WhatsApp.");
+      });
   }
 
   /* ============================================================
-     Contact form (front-end only demo submission)
+     Contact form
      ============================================================ */
   var contactForm = document.getElementById("contactForm");
   var contactSuccess = document.getElementById("contactSuccess");
+  var contactError = document.getElementById("contactError");
   if (contactForm) {
     contactForm.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -384,10 +443,30 @@
         contactForm.reportValidity();
         return;
       }
-      contactForm.reset();
-      if (contactSuccess) contactSuccess.hidden = false;
-      // NOTE: no backend is configured — wire this up to your email/CRM
-      // service to actually receive messages.
+      if (contactError) { contactError.hidden = true; contactError.textContent = ""; }
+
+      var formData = new FormData(contactForm);
+      var payload = {};
+      formData.forEach(function (value, key) { payload[key] = value; });
+
+      var submitBtn = contactForm.querySelector('button[type="submit"]');
+      var previousLabel = submitBtn ? submitBtn.innerHTML : "";
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Envoi en cours..."; }
+
+      sendToFormSubmit(payload, "Nouveau message de contact - " + (payload.sujet || "Site web"))
+        .then(function () {
+          contactForm.reset();
+          if (contactSuccess) contactSuccess.hidden = false;
+        })
+        .catch(function () {
+          if (contactError) {
+            contactError.textContent = "Une erreur est survenue lors de l'envoi. Merci de réessayer, ou contactez-nous directement par téléphone ou WhatsApp.";
+            contactError.hidden = false;
+          }
+        })
+        .then(function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = previousLabel; }
+        });
     });
   }
 
@@ -460,10 +539,23 @@
           desc.focus();
           return;
         }
-        form.hidden = true;
-        success.hidden = false;
-        // NOTE: no backend is configured — wire this up to your CRM/email
-        // service to actually receive callback requests.
+
+        if (error) { error.hidden = true; error.textContent = ""; }
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var previousLabel = submitBtn ? submitBtn.textContent : "";
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Envoi en cours..."; }
+
+        sendToFormSubmit(
+          { telephone: tel.value, description_vehicule: desc.value },
+          "Nouvelle demande de rappel"
+        ).then(function () {
+          form.hidden = true;
+          success.hidden = false;
+        }).catch(function () {
+          showError("Une erreur est survenue lors de l'envoi. Merci de réessayer, ou contactez-nous directement par téléphone ou WhatsApp.");
+        }).then(function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = previousLabel; }
+        });
       });
     }
   })();
